@@ -24,6 +24,7 @@ let ``String decoder`` () =
     decodeEq "" jstring @""""""
     decodeFail jstring "null"
     decodeFail jstring ""
+    decodeFail jstring "{}"
     decodeFail jstring "test"
 
 [<Fact>]
@@ -33,3 +34,33 @@ let ``Boolean decoder`` () =
     decodeFail jbool "test"
     decodeFail jbool @"""true"""
     decodeFail jbool "null"
+
+[<Fact>]
+let ``Int decoder`` () =
+    decodeEq 10L jint "10"
+    decodeEq 999912L jint "999912"
+    decodeFail jint "123.0"
+    decodeFail jint "123.1"
+    decodeFail jint @"""123"""
+    decodeFail jint "null"
+    decodeFail jint "{}"
+
+[<Fact>]
+let ``Float decoder`` () =
+    decodeEq 10.0 jfloat "10.0"
+    decodeEq 10.0 jfloat "10"
+    decodeEq -32.1 jfloat "-32.1"
+    decodeFail jfloat "null"
+    decodeFail jfloat @"""10.0"""
+
+[<Fact>]
+let ``Decimal decoder`` () =
+    decodeEq 19.3m jdecimal "19.3"
+    decodeEq 12m jdecimal "12"
+
+[<Fact>]
+let ``Null decoder`` () =
+    let d = jnull "test"
+    decodeEq "test" d "null"
+    decodeFail d ""
+    decodeFail d @"""null"""
