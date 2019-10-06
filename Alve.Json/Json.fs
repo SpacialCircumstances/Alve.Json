@@ -87,5 +87,54 @@ module Decode =
     let apply (d: Decoder<'a>) (df: Decoder<'a -> 'b>): Decoder<'b> =
         bind (fun f -> bind (fun x -> success (f x)) d) df
 
+    let map1 (d: Decoder<'a>) (mapper: 'a -> 'b): Decoder<'b> = fun o -> Result.map mapper (d o)
+    
+    let map2 (d1: Decoder<'a>) (d2: Decoder<'b>) (mapper: 'a -> 'b -> 'c): Decoder<'c> = map1 d1 mapper |> apply d2
+    
+    let map3 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (mapper: 'a -> 'b -> 'c -> 'd): Decoder<'d> =
+        map1 d1 mapper
+                |> apply d2
+                |> apply d3
+    
+    let map4 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (mapper: 'a -> 'b -> 'c -> 'd -> 'e): Decoder<'e> =
+        map1 d1 mapper
+                |> apply d2
+                |> apply d3
+                |> apply d4
+    
+    let map5 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f): Decoder<'f> =
+        map1 d1 mapper
+                |> apply d2
+                |> apply d3
+                |> apply d4
+                |> apply d5
+
+    let map6 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>) (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g): Decoder<'g> =
+        map1 d1 mapper
+                |> apply d2
+                |> apply d3
+                |> apply d4
+                |> apply d5
+                |> apply d6
+
+    let map7 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>) (d7: Decoder<'g>) (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'h): Decoder<'h> =
+        map1 d1 mapper
+                |> apply d2
+                |> apply d3
+                |> apply d4
+                |> apply d5
+                |> apply d6
+                |> apply d7
+
+    let map8 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>) (d7: Decoder<'g>) (d8: Decoder<'h>) (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'h -> 'i): Decoder<'i> =
+        map1 d1 mapper
+                |> apply d2
+                |> apply d3
+                |> apply d4
+                |> apply d5
+                |> apply d6
+                |> apply d7
+                |> apply d8
+
 module Encode = 
     ()
