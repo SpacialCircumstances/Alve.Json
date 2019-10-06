@@ -34,6 +34,7 @@ let ``Boolean decoder`` () =
     decodeFail jbool "test"
     decodeFail jbool @"""true"""
     decodeFail jbool "null"
+    decodeFail jbool "True"
 
 [<Fact>]
 let ``Int decoder`` () =
@@ -64,3 +65,26 @@ let ``Null decoder`` () =
     decodeEq "test" d "null"
     decodeFail d ""
     decodeFail d @"""null"""
+
+[<Fact>]
+let ``OrElse and try decoder`` () =
+    let d1 = orElse jint (jnull 2L)
+    let d2 = jtry jint 2L
+    decodeEq 2L d1 "null"
+    decodeEq 2L d1 "2"
+    decodeEq 3L d1 "3"
+    decodeEq 0L d2 "0"
+    decodeEq 2L d2 "null"
+
+[<Fact>]
+let ``All as string decoder`` () =
+    let d1 = jstring
+    let d2 = map1 jint string
+    let d3 = map1 jfloat string
+    let d4 = map1 jbool string
+    let d = oneOf [ d1; d2; d3; d4 ]
+    decodeEq "test" d @"""test"""
+    decodeEq "123" d "123"
+    decodeEq "123" d @"""123"""
+    decodeEq "True" d "true"
+    decodeEq "True" d @"""True"""
