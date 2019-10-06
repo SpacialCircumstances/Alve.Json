@@ -69,5 +69,7 @@ module Decode =
             | Ok a -> Ok a
             | Error _ -> d2 json
 
+    let jtry (dec: Decoder<'a>) (a: 'a) = orElse dec (success a)
+
 module Encode = 
     ()
