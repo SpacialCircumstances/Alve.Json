@@ -40,7 +40,10 @@ module Decode =
     let jdecimal: Decoder<decimal> = fun json ->
         match json.ValueKind with
             | JsonValueKind.Number ->
-                Ok (json.GetDecimal())
+                try
+                    Ok (json.GetDecimal())
+                with
+                    | :? FormatException as e -> Error e.Message
             | other -> expectationFailed "Decimal" other
 
 module Encode = 
