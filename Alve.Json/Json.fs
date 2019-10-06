@@ -1,4 +1,4 @@
-﻿module Json
+﻿namespace Alve.Json
 
 open System
 open System.Collections.Generic
