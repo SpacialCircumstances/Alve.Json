@@ -46,9 +46,20 @@ module Decode =
                     | :? FormatException as e -> Error e.Message
             | other -> expectationFailed "Decimal" other
 
-    let jsuccess (a: 'a): Decoder<'a> = fun json -> Ok a
+    let success (a: 'a): Decoder<'a> = fun json -> Ok a
 
-    let jfailed (msg: string): Decoder<'a> = fun json -> Error msg
+    let failed (msg: string): Decoder<'a> = fun json -> Error msg
+
+    let nullable (dec: Decoder<'a>): Decoder<'a option> = fun json ->
+        match json.ValueKind with
+            | JsonValueKind.Null -> Ok None
+            | other -> dec json |> Result.map Some
+
+    let orElse (d1: Decoder<'a>) (d2: Decoder<'a>) = fun json ->
+        let r = d1 json
+        match r with
+            | Ok a -> Ok a
+            | Error _ -> d2 json
 
 module Encode = 
     ()
