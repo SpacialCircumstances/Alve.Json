@@ -18,6 +18,8 @@ let decodeEq (expected: 'a) (decoder: Decoder<'a>) (str: string) =
         | Ok res -> Assert.Equal<'a>(expected, res)
         | Error e -> Assert.True(false, e)
 
+let readFile (path: string) = System.IO.File.ReadAllText path
+
 [<Fact>]
 let ``String decoder`` () =
     decodeEq "test" jstring @"""test"""
@@ -88,3 +90,28 @@ let ``All as string decoder`` () =
     decodeEq "123" d @"""123"""
     decodeEq "True" d "true"
     decodeEq "True" d @"""True"""
+
+[<Fact>]
+let ``Deep value access`` () =
+    let json = readFile "test1.json"
+    let glossary = field "glossary"
+    let title = glossary (field "title" jstring)
+    let glossDiv = fun d -> glossary (field "GlossDiv" d)
+    let gdTitle = glossDiv (field "title" jstring)
+    let glossEntry = fun d -> glossDiv (field "GlossList" (field "GlossEntry" d))
+    let glossEntryId = glossEntry (field "ID" jstring)
+    let glossEntryDef = fun d -> glossEntry (field "GlossDef" d)
+    let glossSeeAlso = fun d -> glossEntryDef (field "GlossSeeAlso" d)
+    let glossSeeAlso0 = glossSeeAlso (index 0 jstring)
+    let glossSeeAlso1 = glossSeeAlso (index 1 jstring)
+    let acronym = at [ "glossary"; "GlossDiv"; "GlossList"; "GlossEntry"; "Acronym" ] jstring
+    let gdTitle2 = at [ "glossary"; "GlossDiv"; "title" ] jstring
+    decodeEq "example glossary" title json
+    decodeEq "S" gdTitle json
+    decodeEq "S" gdTitle2 json
+    decodeEq "SGML" glossEntryId json
+    decodeEq "GML" glossSeeAlso0 json
+    decodeEq "XML" glossSeeAlso1 json
+    decodeEq "SGML" acronym json
+    let f1 = at [ "glossary"; "GlossaryDiv"; "test" ] jstring
+    decodeFail f1 json
