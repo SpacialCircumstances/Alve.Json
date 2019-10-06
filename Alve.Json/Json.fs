@@ -1,6 +1,7 @@
 ﻿module Json
 
 open System
+open System.Collections.Generic
 open System.Text.Json
 
 module Decode =
@@ -67,45 +68,6 @@ module Decode =
         match json.ValueKind with
             | JsonValueKind.Null -> Ok None
             | _ -> dec json |> Result.map Some
-
-    let keyValuePairs (dec: Decoder<'a>): Decoder<(string * 'a) list> = fun json ->
-        match json.ValueKind with
-            | JsonValueKind.Object ->
-                let elements = seq {
-                    for el in json.EnumerateObject() do
-                        yield (el.Name, dec el.Value)
-                }
-                let values, errors = Seq.fold (fun (results, errors) (key, el) -> 
-                    match el with
-                        | Ok elem -> (key, elem) :: results, errors
-                        | Error err -> results, err :: errors) ([], []) elements
-                
-                if List.isEmpty errors then
-                    Ok values
-                else 
-                    let (errorDescription, _) = List.fold (fun (errStr, i) err -> (sprintf "%s (Index: %i, Error: %s)" errStr i err, i + 1)) ("Errors decoding array: ", 0) errors
-                    Error errorDescription
-            | other -> expectationFailed "Object" other
-
-    let jlist (dec: Decoder<'a>): Decoder<'a list> = fun json ->
-        match json.ValueKind with
-            | JsonValueKind.Array ->
-                let arr = seq {
-                    for el in json.EnumerateArray() do
-                        yield dec el
-                }
-                Seq.fold (fun (results, errors) el -> 
-                    match el with
-                        | Ok elem -> elem :: results, errors
-                        | Error err -> results, err :: errors) ([], []) arr
-                    |> (fun (vals, errs) ->
-                        if List.isEmpty errs then
-                            Ok vals
-                        else 
-                            let (errorDescription, _) = List.fold (fun (errStr, i) err -> (sprintf "%s (Index: %i, Error: %s)" errStr i err, i + 1)) ("Errors decoding array: ", 0) errs
-                            Error errorDescription)
-
-            | other -> expectationFailed "Array" other
 
     let orElse (d1: Decoder<'a>) (d2: Decoder<'a>) = fun json ->
         let r = d1 json
@@ -174,6 +136,49 @@ module Decode =
                 |> apply d6
                 |> apply d7
                 |> apply d8
+
+    let keyValuePairs (dec: Decoder<'a>): Decoder<(string * 'a) list> = fun json ->
+        match json.ValueKind with
+            | JsonValueKind.Object ->
+                let elements = seq {
+                    for el in json.EnumerateObject() do
+                        yield (el.Name, dec el.Value)
+                }
+                let values, errors = Seq.fold (fun (results, errors) (key, el) -> 
+                    match el with
+                        | Ok elem -> (key, elem) :: results, errors
+                        | Error err -> results, err :: errors) ([], []) elements
+                
+                if List.isEmpty errors then
+                    Ok values
+                else 
+                    let (errorDescription, _) = List.fold (fun (errStr, i) err -> (sprintf "%s (Index: %i, Error: %s)" errStr i err, i + 1)) ("Errors decoding array: ", 0) errors
+                    Error errorDescription
+            | other -> expectationFailed "Object" other
+
+    let jdict (dec: Decoder<'a>): Decoder<IReadOnlyDictionary<string, 'a>> = map1 (keyValuePairs dec) readOnlyDict
+
+    let jmap (dec: Decoder<'a>): Decoder<Map<string, 'a>> = map1 (keyValuePairs dec) Map.ofList
+
+    let jlist (dec: Decoder<'a>): Decoder<'a list> = fun json ->
+        match json.ValueKind with
+            | JsonValueKind.Array ->
+                let arr = seq {
+                    for el in json.EnumerateArray() do
+                        yield dec el
+                }
+                Seq.fold (fun (results, errors) el -> 
+                    match el with
+                        | Ok elem -> elem :: results, errors
+                        | Error err -> results, err :: errors) ([], []) arr
+                    |> (fun (vals, errs) ->
+                        if List.isEmpty errs then
+                            Ok vals
+                        else 
+                            let (errorDescription, _) = List.fold (fun (errStr, i) err -> (sprintf "%s (Index: %i, Error: %s)" errStr i err, i + 1)) ("Errors decoding array: ", 0) errs
+                            Error errorDescription)
+
+            | other -> expectationFailed "Array" other
 
 module Encode = 
     ()
