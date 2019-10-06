@@ -66,7 +66,27 @@ module Decode =
     let nullable (dec: Decoder<'a>): Decoder<'a option> = fun json ->
         match json.ValueKind with
             | JsonValueKind.Null -> Ok None
-            | other -> dec json |> Result.map Some
+            | _ -> dec json |> Result.map Some
+
+    let jlist (dec: Decoder<'a>): Decoder<'a list> = fun json ->
+        match json.ValueKind with
+            | JsonValueKind.Array ->
+                let arr = seq {
+                    for el in json.EnumerateArray() do
+                        yield dec el
+                }
+                Seq.fold (fun (results, errors) el -> 
+                    match el with
+                        | Ok elem -> elem :: results, errors
+                        | Error err -> results, err :: errors) ([], []) arr
+                    |> (fun (vals, errs) ->
+                        if List.isEmpty errs then
+                            Ok vals
+                        else 
+                            let (errorDescription, _) = List.fold (fun (errStr, i) err -> (sprintf "%s (Index: %i, Error: %s)" errStr i err, i + 1)) ("Errors decoding array: ", 0) errs
+                            Error errorDescription)
+
+            | other -> expectationFailed "Array" other
 
     let orElse (d1: Decoder<'a>) (d2: Decoder<'a>) = fun json ->
         let r = d1 json
