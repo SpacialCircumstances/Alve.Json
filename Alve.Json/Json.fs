@@ -160,6 +160,14 @@ module Decode =
 
     let jmap (dec: Decoder<'a>): Decoder<Map<string, 'a>> = map1 (keyValuePairs dec) Map.ofList
 
+    let field (fieldname: string) (dec: Decoder<'a>): Decoder<'a> = fun json ->
+        match json.ValueKind with
+            | JsonValueKind.Object ->
+                match json.TryGetProperty(fieldname) with
+                    | true, el -> dec el
+                    | _ -> Error (sprintf "Error decoding Object: Key %s not found in Object" fieldname)
+            | other -> expectationFailed "Object" other
+
     let jlist (dec: Decoder<'a>): Decoder<'a list> = fun json ->
         match json.ValueKind with
             | JsonValueKind.Array ->
