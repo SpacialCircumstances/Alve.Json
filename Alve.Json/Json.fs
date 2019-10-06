@@ -6,6 +6,14 @@ open System.Text.Json
 module Decode =
     type Decoder<'a> = JsonElement -> Result<'a, string>
 
+    let decodeElement (dec: Decoder<'a>) (element: JsonElement): Result<'a, string> = dec element
+
+    let decodeDocument (dec: Decoder<'a>) (document: JsonDocument): Result<'a, string> = decodeElement dec document.RootElement
+
+    let decodeString (dec: Decoder<'a>) (json: string): Result<'a, string> =
+        let doc = JsonDocument.Parse json
+        decodeDocument dec doc
+
     let private expectationFailed (expected: string) (got: 'a) = Error (sprintf "Expected: %s, but got: %O" expected got)
 
     let jstring: Decoder<string> = fun json ->
