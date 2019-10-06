@@ -170,6 +170,15 @@ module Decode =
 
     let at (fields: string list) (dec: Decoder<'a>): Decoder<'a> = (List.foldBack field fields dec)
 
+    let index (idx: int) (dec: Decoder<'a>): Decoder<'a> = fun json ->
+        match json.ValueKind with
+            | JsonValueKind.Array ->
+                if idx > 0 && idx < json.GetArrayLength() then
+                    dec (json.Item idx)
+                else
+                    Error (sprintf "Index %i does not exist in Array" idx)
+            | other -> expectationFailed "Array" other
+
     let jlist (dec: Decoder<'a>): Decoder<'a list> = fun json ->
         match json.ValueKind with
             | JsonValueKind.Array ->
