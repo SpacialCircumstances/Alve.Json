@@ -71,5 +71,14 @@ module Decode =
 
     let jtry (dec: Decoder<'a>) (a: 'a) = orElse dec (success a)
 
+    let bind (dec: Decoder<'a>) (binder: 'a -> Decoder<'b>): Decoder<'b> = fun json ->
+        let r = dec json
+        match r with
+            | Ok a -> (binder a) json
+            | Error e -> Error e
+
+    let apply (d: Decoder<'a>) (df: Decoder<'a -> 'b>): Decoder<'b> =
+        bind df (fun f -> bind d (fun x -> success (f x)))
+
 module Encode = 
     ()
