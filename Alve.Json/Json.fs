@@ -173,7 +173,7 @@ module Decode =
     let index (idx: int) (dec: Decoder<'a>): Decoder<'a> = fun json ->
         match json.ValueKind with
             | JsonValueKind.Array ->
-                if idx > 0 && idx < json.GetArrayLength() then
+                if idx >= 0 && idx < json.GetArrayLength() then
                     Result.mapError (fun err -> sprintf "Error decoding element %i: %s" idx err) (dec (json.Item idx))
                 else
                     Error (sprintf "Index %i does not exist in Array" idx)
