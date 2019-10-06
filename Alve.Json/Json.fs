@@ -78,14 +78,14 @@ module Decode =
 
     let oneOf (ds: Decoder<'a> seq): Decoder<'a> = Seq.reduce orElse ds
 
-    let bind (dec: Decoder<'a>) (binder: 'a -> Decoder<'b>): Decoder<'b> = fun json ->
+    let bind (binder: 'a -> Decoder<'b>) (dec: Decoder<'a>): Decoder<'b> = fun json ->
         let r = dec json
         match r with
             | Ok a -> (binder a) json
             | Error e -> Error e
 
     let apply (d: Decoder<'a>) (df: Decoder<'a -> 'b>): Decoder<'b> =
-        bind df (fun f -> bind d (fun x -> success (f x)))
+        bind (fun f -> bind (fun x -> success (f x)) d) df
 
 module Encode = 
     ()
