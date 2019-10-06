@@ -76,7 +76,7 @@ module Decode =
 
     let jtry (dec: Decoder<'a>) (a: 'a) = orElse dec (success a)
 
-    let oneOf (ds: Decoder<'a> seq): Decoder<'a> = Seq.reduce orElse ds
+    let oneOf (ds: Decoder<'a> list): Decoder<'a> = List.reduce orElse ds
 
     let bind (binder: 'a -> Decoder<'b>) (dec: Decoder<'a>): Decoder<'b> = fun json ->
         let r = dec json
