@@ -164,7 +164,7 @@ module Decode =
         match json.ValueKind with
             | JsonValueKind.Object ->
                 match json.TryGetProperty(fieldname) with
-                    | true, el -> dec el
+                    | true, el -> Result.mapError (fun err -> sprintf "Error decoding field %s: %s" fieldname err) (dec el)
                     | _ -> Error (sprintf "Error decoding Object: Key %s not found in Object" fieldname)
             | other -> expectationFailed "Object" other
 
@@ -174,7 +174,7 @@ module Decode =
         match json.ValueKind with
             | JsonValueKind.Array ->
                 if idx > 0 && idx < json.GetArrayLength() then
-                    dec (json.Item idx)
+                    Result.mapError (fun err -> sprintf "Error decoding element %i: %s" idx err) (dec (json.Item idx))
                 else
                     Error (sprintf "Index %i does not exist in Array" idx)
             | other -> expectationFailed "Array" other
