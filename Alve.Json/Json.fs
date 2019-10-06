@@ -168,6 +168,8 @@ module Decode =
                     | _ -> Error (sprintf "Error decoding Object: Key %s not found in Object" fieldname)
             | other -> expectationFailed "Object" other
 
+    let at (fields: string list) (dec: Decoder<'a>): Decoder<'a> = (List.foldBack field fields dec)
+
     let jlist (dec: Decoder<'a>): Decoder<'a list> = fun json ->
         match json.ValueKind with
             | JsonValueKind.Array ->
