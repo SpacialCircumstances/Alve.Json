@@ -115,3 +115,83 @@ let ``Deep value access`` () =
     decodeEq "SGML" acronym json
     let f1 = at [ "glossary"; "GlossaryDiv"; "test" ] jstring
     decodeFail f1 json
+
+type Item = {
+    id: string
+    label: string option
+}
+
+type MenuItem =
+    | Item of Item
+    | Separator
+
+type Menu = {
+    header: string
+    items: MenuItem list
+}
+
+type Config = {
+    menu: Menu
+}
+
+[<Fact>]
+let ``Map json to data structures`` () = 
+    let json = readFile "test2.json"
+    let itemDecoder = map2 (field "id" jstring) (field "label" jstring |> optional) (fun id label -> { id = id; label = label })
+    let menuItemDecoder = map1 (nullable itemDecoder) (fun item -> match item with
+                                                                        | None -> Separator
+                                                                        | Some item -> Item item)
+    let menuItemListDecoder = jlist menuItemDecoder
+    let menuDecoder = map2 (field "header" jstring) (field "items" menuItemListDecoder) (fun header items -> { header = header; items = items })
+    let configDecoder = map1 (field "menu" menuDecoder) (fun menu -> { menu = menu })
+    let config = {
+        menu = {
+            header = "SVG Viewer"
+            items = [
+                Item { 
+                    id = "Open"
+                    label = None
+                }
+                Item {
+                    id = "OpenNew"
+                    label = Some "Open New"
+                }
+                Separator
+                Item {
+                    id = "ZoomIn"
+                    label = Some "Zoom In"
+                }
+                Item {
+                    id = "ZoomOut"
+                    label = Some "Zoom Out"
+                }
+                Item {
+                    id = "OriginalView"
+                    label = Some "Original View"
+                }
+                Separator
+                Item {
+                    id = "Quality"
+                    label = None
+                }
+                Item {
+                    id = "Pause"
+                    label = None
+                }
+                Item {
+                    id = "Mute"
+                    label = None
+                }
+                Separator
+                Item {
+                    id = "Help"
+                    label = None
+                }
+                Item {
+                    id = "About"
+                    label = Some "About Adobe CVG Viewer..."
+                }
+            ]
+        }
+    }
+    decodeEq config configDecoder json
