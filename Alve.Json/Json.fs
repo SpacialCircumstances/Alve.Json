@@ -137,6 +137,13 @@ module Decode =
                 |> apply d7
                 |> apply d8
 
+    
+    
+    let optional (dec: Decoder<'a>): Decoder<'a option> = fun json ->
+        match dec json with
+            | Ok a -> Ok (Some a)
+            | Error _ -> Ok None
+
     let keyValuePairs (dec: Decoder<'a>): Decoder<(string * 'a) list> = fun json ->
         match json.ValueKind with
             | JsonValueKind.Object ->
