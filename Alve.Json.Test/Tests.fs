@@ -134,9 +134,60 @@ type Config = {
     menu: Menu
 }
 
+let config = {
+    menu = {
+        header = "SVG Viewer"
+        items = [
+            Item { 
+                id = "Open"
+                label = None
+            }
+            Item {
+                id = "OpenNew"
+                label = Some "Open New"
+            }
+            Separator
+            Item {
+                id = "ZoomIn"
+                label = Some "Zoom In"
+            }
+            Item {
+                id = "ZoomOut"
+                label = Some "Zoom Out"
+            }
+            Item {
+                id = "OriginalView"
+                label = Some "Original View"
+            }
+            Separator
+            Item {
+                id = "Quality"
+                label = None
+            }
+            Item {
+                id = "Pause"
+                label = None
+            }
+            Item {
+                id = "Mute"
+                label = None
+            }
+            Separator
+            Item {
+                id = "Help"
+                label = None
+            }
+            Item {
+                id = "About"
+                label = Some "About Adobe CVG Viewer..."
+            }
+        ]
+    }
+}
+
 [<Fact>]
 let ``Map json to data structures`` () = 
-    let json = readFile "test2.json"
+    let jsonText = readFile "test2.json"
     let itemDecoder = map2 (field "id" jstring) (field "label" jstring |> optional) (fun id label -> { id = id; label = label })
     let menuItemDecoder = map1 (nullable itemDecoder) (fun item -> match item with
                                                                         | None -> Separator
@@ -144,54 +195,38 @@ let ``Map json to data structures`` () =
     let menuItemListDecoder = jlist menuItemDecoder
     let menuDecoder = map2 (field "header" jstring) (field "items" menuItemListDecoder) (fun header items -> { header = header; items = items })
     let configDecoder = map1 (field "menu" menuDecoder) (fun menu -> { menu = menu })
-    let config = {
-        menu = {
-            header = "SVG Viewer"
-            items = [
-                Item { 
-                    id = "Open"
-                    label = None
-                }
-                Item {
-                    id = "OpenNew"
-                    label = Some "Open New"
-                }
-                Separator
-                Item {
-                    id = "ZoomIn"
-                    label = Some "Zoom In"
-                }
-                Item {
-                    id = "ZoomOut"
-                    label = Some "Zoom Out"
-                }
-                Item {
-                    id = "OriginalView"
-                    label = Some "Original View"
-                }
-                Separator
-                Item {
-                    id = "Quality"
-                    label = None
-                }
-                Item {
-                    id = "Pause"
-                    label = None
-                }
-                Item {
-                    id = "Mute"
-                    label = None
-                }
-                Separator
-                Item {
-                    id = "Help"
-                    label = None
-                }
-                Item {
-                    id = "About"
-                    label = Some "About Adobe CVG Viewer..."
-                }
-            ]
+    decodeEq config configDecoder jsonText
+
+[<Fact>]
+let ``Map json to data structures with computation expression`` () =
+    let jsonText = readFile "test2.json"
+    let itemDecoder = fun json -> ok {
+        let! id = field "id" jstring json
+        let! label = optional (field "label" jstring) json
+        return {
+            id = id
+            label = label
         }
     }
-    decodeEq config configDecoder json
+    let menuItemDecoder = fun json -> ok {
+        let! item = nullable itemDecoder json
+        return match item with
+                | None -> Separator
+                | Some item -> Item item
+    }
+    let menuDecoder = fun json -> ok {
+        let itemsDecoder = jlist menuItemDecoder
+        let! items = (field "items" itemsDecoder) json
+        let! header = (field "header" jstring) json
+        return {
+            items = items
+            header = header
+        }
+    }
+    let configDecoder = fun json -> ok {
+        let! menu = json |> field "menu" menuDecoder
+        return {
+            menu = menu
+        }
+    }
+    decodeEq config configDecoder jsonText
