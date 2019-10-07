@@ -137,8 +137,6 @@ module Decode =
                 |> apply d7
                 |> apply d8
 
-    
-    
     let optional (dec: Decoder<'a>): Decoder<'a option> = fun json ->
         match dec json with
             | Ok a -> Ok (Some a)
@@ -193,16 +191,16 @@ module Decode =
                     for el in json.EnumerateArray() do
                         yield dec el
                 }
-                Seq.fold (fun (results, errors) el -> 
+                let values, errors = Seq.foldBack (fun el (results, errors) -> 
                     match el with
                         | Ok elem -> elem :: results, errors
-                        | Error err -> results, err :: errors) ([], []) arr
-                    |> (fun (vals, errs) ->
-                        if List.isEmpty errs then
-                            Ok vals
-                        else 
-                            let (errorDescription, _) = List.fold (fun (errStr, i) err -> (sprintf "%s (Index: %i, Error: %s)" errStr i err, i + 1)) ("Errors decoding array: ", 0) errs
-                            Error errorDescription)
+                        | Error err -> results, err :: errors) arr ([], [])
+                
+                if List.isEmpty errors then
+                    Ok values
+                else 
+                    let (errorDescription, _) = List.fold (fun (errStr, i) err -> (sprintf "%s (Index: %i, Error: %s)" errStr i err, i + 1)) ("Errors decoding array: ", 0) errors
+                    Error errorDescription
 
             | other -> expectationFailed "Array" other
 
