@@ -198,40 +198,6 @@ let ``Map json to data structures`` () =
     decodeEq config configDecoder jsonText
 
 [<Fact>]
-let ``Map json to data structures with ok computation expression`` () =
-    let jsonText = readFile "test2.json"
-    let itemDecoder = fun json -> ok {
-        let! id = field "id" jstring json
-        let! label = optional (field "label" jstring) json
-        return {
-            id = id
-            label = label
-        }
-    }
-    let menuItemDecoder = fun json -> ok {
-        let! item = nullable itemDecoder json
-        return match item with
-                | None -> Separator
-                | Some item -> Item item
-    }
-    let menuDecoder = fun json -> ok {
-        let itemsDecoder = jlist menuItemDecoder
-        let! items = (field "items" itemsDecoder) json
-        let! header = (field "header" jstring) json
-        return {
-            items = items
-            header = header
-        }
-    }
-    let configDecoder = fun json -> ok {
-        let! menu = json |> field "menu" menuDecoder
-        return {
-            menu = menu
-        }
-    }
-    decodeEq config configDecoder jsonText
-
-[<Fact>]
 let ``Map json to data structures with computation expression`` () =
     let jsonText = readFile "test2.json"
     let itemDecoder = jsonDecode {
