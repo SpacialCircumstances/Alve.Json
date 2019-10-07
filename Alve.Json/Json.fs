@@ -212,4 +212,9 @@ module Decode =
     let jsonDecode = JsonDecodeBuilder()
 
 module Encode = 
-    ()
+    type JsonValue =
+        | JsonString of string
+        | JsonFloat of float
+        | JsonInteger of int64
+        | JsonArray of JsonValue list
+        | JsonObject of Map<string, JsonValue>
