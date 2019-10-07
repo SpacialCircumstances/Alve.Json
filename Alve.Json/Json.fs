@@ -214,5 +214,12 @@ module Decode =
         
     let ok = SuccessBuilder()
 
+    type JsonDecodeBuilder() =
+        member this.Bind(x: Decoder<'a>, f) = bind f x
+
+        member this.Return(x) = success x
+
+    let jsonDecode = JsonDecodeBuilder()
+
 module Encode = 
     ()
