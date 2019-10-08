@@ -274,6 +274,7 @@ module Encode =
     let encodeToStringOpt (jv: JsonValue) (options: JsonWriterOptions) =
         use stream = new MemoryStream()
         do encodeToStream jv stream options
+        stream.Position <- 0L
         use reader = new StreamReader(stream)
         reader.ReadToEnd ()
 
