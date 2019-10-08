@@ -1,6 +1,7 @@
 module Tests
 
 open Alve.Json.Decode
+open Alve.Json.Encode
 open Xunit
 
 let decodeFail (decoder: Decoder<'a>) (str: string) =
@@ -197,36 +198,64 @@ let ``Map json to data structures`` () =
     let configDecoder = map1 (field "menu" menuDecoder) (fun menu -> { menu = menu })
     decodeEq config configDecoder jsonText
 
+let itemDecoder = jsonDecode {
+    let! id = field "id" jstring
+    let! label = optional (field "label" jstring)
+    return {
+        id = id
+        label = label
+    }
+}
+let menuItemDecoder = jsonDecode {
+    let! item = nullable itemDecoder
+    return match item with
+            | None -> Separator
+            | Some item -> Item item
+}
+let menuDecoder = jsonDecode {
+    let itemsDecoder = jlist menuItemDecoder
+    let! items = (field "items" itemsDecoder)
+    let! header = (field "header" jstring)
+    return {
+        items = items
+        header = header
+    }
+}
+let configDecoder = jsonDecode {
+    let! menu = field "menu" menuDecoder
+    return {
+        menu = menu
+    }
+}
+
 [<Fact>]
 let ``Map json to data structures with computation expression`` () =
     let jsonText = readFile "test2.json"
-    let itemDecoder = jsonDecode {
-        let! id = field "id" jstring
-        let! label = optional (field "label" jstring)
-        return {
-            id = id
-            label = label
-        }
-    }
-    let menuItemDecoder = jsonDecode {
-        let! item = nullable itemDecoder
-        return match item with
-                | None -> Separator
-                | Some item -> Item item
-    }
-    let menuDecoder = jsonDecode {
-        let itemsDecoder = jlist menuItemDecoder
-        let! items = (field "items" itemsDecoder)
-        let! header = (field "header" jstring)
-        return {
-            items = items
-            header = header
-        }
-    }
-    let configDecoder = jsonDecode {
-        let! menu = field "menu" menuDecoder
-        return {
-            menu = menu
-        }
-    }
     decodeEq config configDecoder jsonText
+
+[<Fact>]
+let ``Encode and decode data`` () =
+    let itemEncoder (mi: MenuItem) =
+        match mi with
+            | Separator -> JsonNull
+            | Item item -> 
+                JsonObject (dict [
+                    "id", JsonString item.id
+                    "label", match item.label with
+                                | None -> JsonNull
+                                | Some lb -> JsonString lb
+                ])
+
+    let menuEncoder (menu: Menu) =
+        JsonObject (dict [
+            "header", JsonString menu.header
+            "items", JsonArray (List.map itemEncoder menu.items)
+        ])
+
+    let configEncoder (config: Config) =
+        JsonObject (dict [
+            "menu", (menuEncoder config.menu)
+        ])
+    let jsonValue = configEncoder config
+    let encodedJson = encodeToString jsonValue
+    decodeEq config configDecoder encodedJson
