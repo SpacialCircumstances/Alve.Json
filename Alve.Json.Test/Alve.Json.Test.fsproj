@@ -14,7 +14,7 @@
     <Content Include="test1.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Compile Include="Tests.fs" />
+    <Compile Include="DecodeTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
