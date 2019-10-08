@@ -213,8 +213,20 @@ module Decode =
 
 module Encode = 
     type JsonValue =
+        | JsonNull
         | JsonString of string
         | JsonFloat of float
         | JsonInteger of int64
         | JsonArray of JsonValue list
-        | JsonObject of Map<string, JsonValue>
+        | JsonObject of Map<string, JsonValue>    let rec private encodeArr (jv: JsonValue) (writer: Utf8JsonWriter) =
+        match jv with
+            | JsonObject obj ->
+                writer.WriteStartObject ()
+                Map.iter (fun key value ->
+                    match value with
+                        | JsonString str -> writer.WriteString(key, str)
+                        | JsonFloat f -> writer.WriteNumber(key, f)
+                        | JsonInteger i -> writer.WriteNumber(key, i)
+                        | JsonNull -> writer.WriteNull(key)
+                ) obj
+                writer.WriteEndObject ()
