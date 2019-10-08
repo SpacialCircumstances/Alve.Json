@@ -221,10 +221,12 @@ module Encode =
         | JsonInteger of int64
         | JsonDecimal of decimal
         | JsonArray of JsonValue list
-        | JsonObject of Map<string, JsonValue>
+        | JsonObject of IDictionary<string, JsonValue>
 
-    let rec private encodeObj (obj: Map<string, JsonValue>) (writer: Utf8JsonWriter) encodeArr =
-        Map.iter (fun key value ->
+    let rec private encodeObj (obj: IDictionary<string, JsonValue>) (writer: Utf8JsonWriter) encodeArr =
+        for entry in obj do
+            let key = entry.Key
+            let value = entry.Value
             match value with
                 | JsonString str -> writer.WriteString(key, str)
                 | JsonFloat f -> writer.WriteNumber(key, f)
@@ -239,7 +241,6 @@ module Encode =
                     writer.WriteStartObject(key)
                     encodeObj obj2 writer encodeArr
                     writer.WriteEndObject()
-        ) obj
 
     let rec private encodeArr (jv: JsonValue) (writer: Utf8JsonWriter) =
         match jv with
