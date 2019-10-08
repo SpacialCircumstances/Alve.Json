@@ -219,22 +219,48 @@ module Encode =
         | JsonString of string
         | JsonFloat of float
         | JsonInteger of int64
+        | JsonDecimal of decimal
         | JsonArray of JsonValue list
         | JsonObject of Map<string, JsonValue>
+
+    let rec private encodeObj (obj: Map<string, JsonValue>) (writer: Utf8JsonWriter) encodeArr =
+        Map.iter (fun key value ->
+            match value with
+                | JsonString str -> writer.WriteString(key, str)
+                | JsonFloat f -> writer.WriteNumber(key, f)
+                | JsonInteger i -> writer.WriteNumber(key, i)
+                | JsonDecimal d -> writer.WriteNumber(key, d)
+                | JsonNull -> writer.WriteNull(key)
+                | JsonArray arr ->
+                    writer.WriteStartArray (key)
+                    List.iter (fun el -> encodeArr el writer) arr
+                    writer.WriteEndArray ()
+                | JsonObject obj2 ->
+                    writer.WriteStartObject(key)
+                    encodeObj obj2 writer encodeArr
+                    writer.WriteEndObject()
+        ) obj
 
     let rec private encodeArr (jv: JsonValue) (writer: Utf8JsonWriter) =
         match jv with
             | JsonObject obj ->
                 writer.WriteStartObject ()
-                Map.iter (fun key value ->
-                    match value with
-                        | JsonString str -> writer.WriteString(key, str)
-                        | JsonFloat f -> writer.WriteNumber(key, f)
-                        | JsonInteger i -> writer.WriteNumber(key, i)
-                        | JsonNull -> writer.WriteNull(key)
-                ) obj
+                encodeObj obj writer encodeArr
                 writer.WriteEndObject ()
-        ()
+            | JsonArray arr ->
+                writer.WriteStartArray ()
+                List.iter (fun el -> encodeArr el writer) arr
+                writer.WriteEndArray ()
+            | JsonNull ->
+                writer.WriteNullValue ()
+            | JsonString str ->
+                writer.WriteStringValue(str)
+            | JsonInteger i ->
+                writer.WriteNumberValue(i)
+            | JsonFloat f ->
+                writer.WriteNumberValue(f)
+            | JsonDecimal d ->
+                writer.WriteNumberValue(d)
     
     let encodeToWriter (jv: JsonValue) (writer: Utf8JsonWriter) =
         do encodeArr jv writer
@@ -249,5 +275,5 @@ module Encode =
         do encodeToStream jv stream options
         use reader = new StreamReader(stream)
         reader.ReadToEnd ()
-    
+
     let encodeToString (jv: JsonValue) = encodeToStringOpt jv ( JsonWriterOptions())
