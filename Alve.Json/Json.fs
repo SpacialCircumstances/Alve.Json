@@ -212,13 +212,17 @@ module Decode =
     let jsonDecode = JsonDecodeBuilder()
 
 module Encode = 
+    open System.IO
+    
     type JsonValue =
         | JsonNull
         | JsonString of string
         | JsonFloat of float
         | JsonInteger of int64
         | JsonArray of JsonValue list
-        | JsonObject of Map<string, JsonValue>    let rec private encodeArr (jv: JsonValue) (writer: Utf8JsonWriter) =
+        | JsonObject of Map<string, JsonValue>
+
+    let rec private encodeArr (jv: JsonValue) (writer: Utf8JsonWriter) =
         match jv with
             | JsonObject obj ->
                 writer.WriteStartObject ()
@@ -230,3 +234,20 @@ module Encode =
                         | JsonNull -> writer.WriteNull(key)
                 ) obj
                 writer.WriteEndObject ()
+        ()
+    
+    let encodeToWriter (jv: JsonValue) (writer: Utf8JsonWriter) =
+        do encodeArr jv writer
+        do writer.Flush ()
+    
+    let encodeToStream (jv: JsonValue) (stream: Stream) (options: JsonWriterOptions) = 
+        use writer = new Utf8JsonWriter(stream, options)
+        do encodeToWriter jv writer
+    
+    let encodeToStringOpt (jv: JsonValue) (options: JsonWriterOptions) =
+        use stream = new MemoryStream()
+        do encodeToStream jv stream options
+        use reader = new StreamReader(stream)
+        reader.ReadToEnd ()
+    
+    let encodeToString (jv: JsonValue) = encodeToStringOpt jv ( JsonWriterOptions())
