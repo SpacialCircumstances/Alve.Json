@@ -1,6 +1,6 @@
 # Alve.Json
 
-A simple F# library for decoding and encoding JSON values, inspired by Elm's Json.Decode.
+A simple F# library for decoding and encoding JSON values, inspired by Elm's Json.Decode. It is based on the [`System.Text.Json`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json?view=netcore-3.0) APIs.
 
 ## Installation
 
@@ -128,6 +128,10 @@ let configDecoder = jsonDecode {
 
 printfn "%A" (decodeString configDecoder json)
 ```
+
+## Performance
+
+Alve.Json requires the entire JSON to be present in memory for decoding. Therefore, it is unsuited for processing enormous amounts of data. Also, the functional programming style (bind, apply etc.) is not very good for performance and may generate some garbage, so do not use this in performance-sensitive applications.
 
 ## License
 
