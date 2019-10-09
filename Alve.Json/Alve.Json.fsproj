@@ -11,6 +11,9 @@
     <PackageProjectUrl>https://github.com/SpacialCircumstances/Alve.Json</PackageProjectUrl>
     <RepositoryUrl>https://github.com/SpacialCircumstances/Alve.Json</RepositoryUrl>
     <PackageTags>fsharp, json</PackageTags>
+    <Description>A simple F# library for decoding and encoding JSON values, inspired by Elm's Json.Decode based on the System.Text.Json APIs.</Description>
+    <RepositoryType>GIT</RepositoryType>
+    <Company />
   </PropertyGroup>
 
   <ItemGroup>
