@@ -5,17 +5,25 @@ open System.Collections.Generic
 open System.Text.Json
 
 module Decode =
-    type Decoder<'a> = JsonElement -> Result<'a, string>
+    type JsonError = 
+        | DecodingError of string //For wrapping exceptions etc.
+        | JsonTypeError of string * string
+        | NotFoundError
+        | FieldError of string * JsonError
+        | ElementError of int * JsonError
+        | MultiError of JsonError list
 
-    let decodeElement (dec: Decoder<'a>) (element: JsonElement): Result<'a, string> = dec element
+    type Decoder<'a> = JsonElement -> Result<'a, JsonError>
 
-    let decodeDocument (dec: Decoder<'a>) (document: JsonDocument): Result<'a, string> = decodeElement dec document.RootElement
+    let decodeElement (dec: Decoder<'a>) (element: JsonElement): Result<'a, JsonError> = dec element
 
-    let decodeString (dec: Decoder<'a>) (json: string): Result<'a, string> =
+    let decodeDocument (dec: Decoder<'a>) (document: JsonDocument): Result<'a, JsonError> = decodeElement dec document.RootElement
+
+    let decodeString (dec: Decoder<'a>) (json: string): Result<'a, JsonError> =
         let doc = JsonDocument.Parse json
         decodeDocument dec doc
 
-    let private expectationFailed (expected: string) (got: 'a) = Error (sprintf "Expected: %s, but got: %O" expected got)
+    let private expectationFailed (expected: string) (got: 'a) = Error (JsonTypeError (expected, got.ToString()))
 
     let jstring: Decoder<string> = fun json ->
         match json.ValueKind with
@@ -34,7 +42,7 @@ module Decode =
                 try
                     Ok (json.GetInt64())
                 with
-                    | :? FormatException as e -> Error e.Message
+                    | :? FormatException as e -> DecodingError e.Message |> Error
             | other -> expectationFailed "Int" other
 
     let jfloat: Decoder<float> = fun json ->
@@ -43,7 +51,7 @@ module Decode =
                 try
                     Ok (json.GetDouble())
                 with
-                    | :? FormatException as e -> Error e.Message
+                    | :? FormatException as e -> DecodingError e.Message |> Error
             | other -> expectationFailed "Float" other
 
     let jdecimal: Decoder<decimal> = fun json ->
@@ -52,12 +60,12 @@ module Decode =
                 try
                     Ok (json.GetDecimal())
                 with
-                    | :? FormatException as e -> Error e.Message
+                    | :? FormatException as e -> DecodingError e.Message |> Error
             | other -> expectationFailed "Decimal" other
 
     let success (a: 'a): Decoder<'a> = fun _ -> Ok a
 
-    let failed (msg: string): Decoder<'a> = fun _ -> Error msg
+    let failed (msg: string): Decoder<'a> = fun _ -> DecodingError msg |> Error
 
     let jnull (a: 'a): Decoder<'a> = fun json ->
         match json.ValueKind with
@@ -152,13 +160,12 @@ module Decode =
                 let values, errors = Seq.fold (fun (results, errors) (key, el) -> 
                     match el with
                         | Ok elem -> (key, elem) :: results, errors
-                        | Error err -> results, err :: errors) ([], []) elements
+                        | Error err -> results, (FieldError (key, err)) :: errors) ([], []) elements
                 
                 if List.isEmpty errors then
                     Ok values
                 else 
-                    let (errorDescription, _) = List.fold (fun (errStr, i) err -> (sprintf "%s (Index: %i, Error: %s)" errStr i err, i + 1)) ("Errors decoding array: ", 0) errors
-                    Error errorDescription
+                    MultiError errors |> Error
             | other -> expectationFailed "Object" other
 
     let jdict (dec: Decoder<'a>): Decoder<IReadOnlyDictionary<string, 'a>> = map1 (keyValuePairs dec) readOnlyDict
@@ -169,8 +176,8 @@ module Decode =
         match json.ValueKind with
             | JsonValueKind.Object ->
                 match json.TryGetProperty(fieldname) with
-                    | true, el -> Result.mapError (fun err -> sprintf "Error decoding field %s: %s" fieldname err) (dec el)
-                    | _ -> Error (sprintf "Error decoding Object: Key %s not found in Object" fieldname)
+                    | true, el -> Result.mapError (fun err -> FieldError (fieldname, err)) (dec el)
+                    | _ -> FieldError (fieldname, NotFoundError) |> Error
             | other -> expectationFailed "Object" other
 
     let at (fields: string list) (dec: Decoder<'a>): Decoder<'a> = (List.foldBack field fields dec)
@@ -179,9 +186,9 @@ module Decode =
         match json.ValueKind with
             | JsonValueKind.Array ->
                 if idx >= 0 && idx < json.GetArrayLength() then
-                    Result.mapError (fun err -> sprintf "Error decoding element %i: %s" idx err) (dec (json.Item idx))
+                    Result.mapError (fun err -> ElementError (idx, err)) (dec (json.Item idx))
                 else
-                    Error (sprintf "Index %i does not exist in Array" idx)
+                    ElementError (idx, NotFoundError) |> Error
             | other -> expectationFailed "Array" other
 
     let jlist (dec: Decoder<'a>): Decoder<'a list> = fun json ->
@@ -191,16 +198,15 @@ module Decode =
                     for el in json.EnumerateArray() do
                         yield dec el
                 }
-                let values, errors = Seq.foldBack (fun el (results, errors) -> 
+                let values, errors, _ = Seq.foldBack (fun el (results, errors, idx) -> 
                     match el with
-                        | Ok elem -> elem :: results, errors
-                        | Error err -> results, err :: errors) arr ([], [])
+                        | Ok elem -> elem :: results, errors, idx - 1
+                        | Error err -> results, (ElementError (idx, err) :: errors), idx - 1) arr ([], [], (Seq.length arr) - 1)
                 
                 if List.isEmpty errors then
                     Ok values
                 else 
-                    let (errorDescription, _) = List.fold (fun (errStr, i) err -> (sprintf "%s (Index: %i, Error: %s)" errStr i err, i + 1)) ("Errors decoding array: ", 0) errors
-                    Error errorDescription
+                    MultiError errors |> Error
 
             | other -> expectationFailed "Array" other
 

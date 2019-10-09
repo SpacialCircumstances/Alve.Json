@@ -17,7 +17,7 @@ let decodeEq (expected: 'a) (decoder: Decoder<'a>) (str: string) =
     let dec = decodeString decoder str
     match dec with
         | Ok res -> Assert.Equal<'a>(expected, res)
-        | Error e -> Assert.True(false, e)
+        | Error e -> Assert.True(false, e.ToString())
 
 let readFile (path: string) = System.IO.File.ReadAllText path
 
