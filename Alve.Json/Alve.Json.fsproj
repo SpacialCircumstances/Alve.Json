@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>0.1.0</Version>
+    <Authors>SpacialCircumstances</Authors>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright (c) 2019 Felix Nolte</Copyright>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/SpacialCircumstances/Alve.Json</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/SpacialCircumstances/Alve.Json</RepositoryUrl>
+    <PackageTags>fsharp, json</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +19,13 @@
 
   <ItemGroup>
     <PackageReference Include="System.Text.Json" Version="4.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
