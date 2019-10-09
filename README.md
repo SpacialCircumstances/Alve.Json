@@ -1,6 +1,6 @@
 # Alve.Json
 
-![Nuget](https://img.shields.io/nuget/v/Alve.Json?style=plastic)
+[![Nuget](https://img.shields.io/nuget/v/Alve.Json?style=plastic)](https://www.nuget.org/packages/Alve.Json/)
 
 A simple F# library for decoding and encoding JSON values, inspired by Elm's Json.Decode. It is based on the [`System.Text.Json`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json?view=netcore-3.0) APIs.
 
