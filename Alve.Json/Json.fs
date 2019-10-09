@@ -12,6 +12,16 @@ module Decode =
         | FieldError of string * JsonError
         | ElementError of int * JsonError
         | MultiError of JsonError list
+    with
+        override x.ToString() = match x with
+                                    | DecodingError e -> e
+                                    | NotFoundError -> "Not found"
+                                    | JsonTypeError (exp, got) -> sprintf "Type error: Expected %s, got %s" exp got
+                                    | FieldError (field, err) -> sprintf "Error decoding field %s: %O" field err
+                                    | ElementError (index, err) -> sprintf "Error decoding element %i: %O" index err
+                                    | MultiError errors -> 
+                                        let strErrors = Seq.map (fun e -> e.ToString()) errors
+                                        String.Join(Environment.NewLine, strErrors)
 
     type Decoder<'a> = JsonElement -> Result<'a, JsonError>
 
