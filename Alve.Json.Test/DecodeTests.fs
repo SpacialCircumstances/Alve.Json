@@ -82,9 +82,9 @@ let ``OrElse and try decoder`` () =
 [<Fact>]
 let ``All as string decoder`` () =
     let d1 = jstring
-    let d2 = map1 jint string
-    let d3 = map1 jfloat string
-    let d4 = map1 jbool string
+    let d2 = map1 string jint
+    let d3 = map1 string jfloat
+    let d4 = map1 string jbool
     let d = oneOf [ d1; d2; d3; d4 ]
     decodeEq "test" d @"""test"""
     decodeEq "123" d "123"
@@ -189,13 +189,13 @@ let config = {
 [<Fact>]
 let ``Map json to data structures`` () = 
     let jsonText = readFile "test2.json"
-    let itemDecoder = map2 (field "id" jstring) (field "label" jstring |> optional) (fun id label -> { id = id; label = label })
-    let menuItemDecoder = map1 (nullable itemDecoder) (fun item -> match item with
-                                                                        | None -> Separator
-                                                                        | Some item -> Item item)
+    let itemDecoder = map2 (fun id label -> { id = id; label = label }) (field "id" jstring) (field "label" jstring |> optional)
+    let menuItemDecoder = map1 (fun item -> match item with
+                                                | None -> Separator
+                                                | Some item -> Item item) (nullable itemDecoder)
     let menuItemListDecoder = jlist menuItemDecoder
-    let menuDecoder = map2 (field "header" jstring) (field "items" menuItemListDecoder) (fun header items -> { header = header; items = items })
-    let configDecoder = map1 (field "menu" menuDecoder) (fun menu -> { menu = menu })
+    let menuDecoder = map2 (fun header items -> { header = header; items = items }) (field "header" jstring) (field "items" menuItemListDecoder)
+    let configDecoder = map1 (fun menu -> { menu = menu }) (field "menu" menuDecoder)
     decodeEq config configDecoder jsonText
 
 let itemDecoder = jsonDecode {

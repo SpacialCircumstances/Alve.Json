@@ -106,38 +106,38 @@ module Decode =
     let apply (d: Decoder<'a>) (df: Decoder<'a -> 'b>): Decoder<'b> =
         bind (fun f -> bind (fun x -> success (f x)) d) df
 
-    let map1 (d: Decoder<'a>) (mapper: 'a -> 'b): Decoder<'b> = fun o -> Result.map mapper (d o)
+    let map1 (mapper: 'a -> 'b) (d: Decoder<'a>): Decoder<'b> = fun o -> Result.map mapper (d o)
     
-    let map2 (d1: Decoder<'a>) (d2: Decoder<'b>) (mapper: 'a -> 'b -> 'c): Decoder<'c> = map1 d1 mapper |> apply d2
+    let map2 (mapper: 'a -> 'b -> 'c) (d1: Decoder<'a>) (d2: Decoder<'b>): Decoder<'c> = map1 mapper d1 |> apply d2
     
-    let map3 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (mapper: 'a -> 'b -> 'c -> 'd): Decoder<'d> =
-        map1 d1 mapper
+    let map3  (mapper: 'a -> 'b -> 'c -> 'd) (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>): Decoder<'d> =
+        map1 mapper d1
                 |> apply d2
                 |> apply d3
     
-    let map4 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (mapper: 'a -> 'b -> 'c -> 'd -> 'e): Decoder<'e> =
-        map1 d1 mapper
+    let map4 (mapper: 'a -> 'b -> 'c -> 'd -> 'e) (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>): Decoder<'e> =
+        map1 mapper d1
                 |> apply d2
                 |> apply d3
                 |> apply d4
     
-    let map5 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f): Decoder<'f> =
-        map1 d1 mapper
+    let map5 (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f) (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>): Decoder<'f> =
+        map1 mapper d1
                 |> apply d2
                 |> apply d3
                 |> apply d4
                 |> apply d5
 
-    let map6 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>) (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g): Decoder<'g> =
-        map1 d1 mapper
+    let map6 (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g) (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>): Decoder<'g> =
+        map1 mapper d1
                 |> apply d2
                 |> apply d3
                 |> apply d4
                 |> apply d5
                 |> apply d6
 
-    let map7 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>) (d7: Decoder<'g>) (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'h): Decoder<'h> =
-        map1 d1 mapper
+    let map7 (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'h) (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>) (d7: Decoder<'g>): Decoder<'h> =
+        map1 mapper d1
                 |> apply d2
                 |> apply d3
                 |> apply d4
@@ -145,8 +145,8 @@ module Decode =
                 |> apply d6
                 |> apply d7
 
-    let map8 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>) (d7: Decoder<'g>) (d8: Decoder<'h>) (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'h -> 'i): Decoder<'i> =
-        map1 d1 mapper
+    let map8 (mapper: 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'h -> 'i) (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>) (d7: Decoder<'g>) (d8: Decoder<'h>): Decoder<'i> =
+        map1 mapper d1
                 |> apply d2
                 |> apply d3
                 |> apply d4
@@ -178,9 +178,9 @@ module Decode =
                     MultiError errors |> Error
             | other -> expectationFailed "Object" other
 
-    let jdict (dec: Decoder<'a>): Decoder<IReadOnlyDictionary<string, 'a>> = map1 (keyValuePairs dec) readOnlyDict
+    let jdict (dec: Decoder<'a>): Decoder<IReadOnlyDictionary<string, 'a>> = map1 readOnlyDict (keyValuePairs dec)
 
-    let jmap (dec: Decoder<'a>): Decoder<Map<string, 'a>> = map1 (keyValuePairs dec) Map.ofList
+    let jmap (dec: Decoder<'a>): Decoder<Map<string, 'a>> = map1 Map.ofList (keyValuePairs dec)
 
     let field (fieldname: string) (dec: Decoder<'a>): Decoder<'a> = fun json ->
         match json.ValueKind with
