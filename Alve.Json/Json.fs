@@ -5,6 +5,21 @@ open System.Collections.Generic
 open System.Text.Json
 
 module Decode =
+    module private Tuples =
+        let inline tuple2 a b = a, b
+
+        let inline tuple3 a b c = a, b, c
+
+        let inline tuple4 a b c d = a, b, c, d
+
+        let inline tuple5 a b c d e = a, b, c, d, e
+
+        let inline tuple6 a b c d e f = a, b, c, d, e, f
+
+        let inline tuple7 a b c d e f g = a, b, c, d, e, f, g
+
+        let inline tuple8 a b c d e f g h = a, b, c, d, e, f, g, h
+
     type JsonError = 
         | DecodingError of string //For wrapping exceptions etc.
         | JsonTypeError of string * string
@@ -154,6 +169,20 @@ module Decode =
                 |> apply d6
                 |> apply d7
                 |> apply d8
+
+    let tuple2 (d1: Decoder<'a>) (d2: Decoder<'b>)= map2 Tuples.tuple2 d1 d2
+
+    let tuple3 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) = map3 Tuples.tuple3 d1 d2 d3
+
+    let tuple4 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) = map4 Tuples.tuple4 d1 d2 d3 d4
+
+    let tuple5 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) = map5 Tuples.tuple5 d1 d2 d3 d4 d5
+
+    let tuple6 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>) = map6 Tuples.tuple6 d1 d2 d3 d4 d5 d6
+
+    let tuple7 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>) (d7: Decoder<'g>) = map7 Tuples.tuple7 d1 d2 d3 d4 d5 d6 d7
+
+    let tuple8 (d1: Decoder<'a>) (d2: Decoder<'b>) (d3: Decoder<'c>) (d4: Decoder<'d>) (d5: Decoder<'e>) (d6: Decoder<'f>) (d7: Decoder<'g>) (d8: Decoder<'h>) = map8 Tuples.tuple8 d1 d2 d3 d4 d5 d6 d7 d8
 
     let optional (dec: Decoder<'a>): Decoder<'a option> = fun json ->
         match dec json with
