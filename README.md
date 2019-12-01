@@ -77,14 +77,13 @@ Then we can write datatype decoders in the following way:
 ```fsharp
 open Alve.Json.Decode
 
-let itemDecoder = map2 (field "id" jstring) (field "label" jstring |> optional) (fun id label -> { id = id;label = label })
-
-let menuItemDecoder = map1 (nullable itemDecoder) (fun item -> match item with
-                                                                    | None -> Separator
-                                                                    | Some item -> Item item)
+let itemDecoder = map2 (fun id label -> { id = id; label = label }) (field "id" jstring) (field "label" jstring > optional)
+let menuItemDecoder = map1 (fun item -> match item with
+                                            | None -> Separator
+                                            | Some item -> Item item) (nullable itemDecoder)
 let menuItemListDecoder = jlist menuItemDecoder
-let menuDecoder = map2 (field "header" jstring) (field "items" menuItemListDecoder) (fun header items -> {header = header; items = items })
-let configDecoder = map1 (field "menu" menuDecoder) (fun menu -> { menu = menu })
+let menuDecoder = map2 (fun header items -> { header = header; items = items }) (field "header" jstring) (field"items" menuItemListDecoder)
+let configDecoder = map1 (fun menu -> { menu = menu }) (field "menu" menuDecoder)
 
 //Now, decode our JSON:
 
