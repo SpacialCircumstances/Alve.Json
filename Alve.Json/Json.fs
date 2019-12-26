@@ -20,7 +20,7 @@ module Decode =
 
         let inline tuple8 a b c d e f g h = a, b, c, d, e, f, g, h
 
-    type JsonError = 
+    type [<StructuredFormatDisplay("{AsString}")>] JsonError = 
         | DecodingError of string //For wrapping exceptions etc.
         | JsonTypeError of string * string
         | NotFoundError
@@ -39,6 +39,8 @@ module Decode =
                                     | MultiError errors -> 
                                         let strErrors = Seq.map (fun e -> e.ToString()) errors
                                         String.Join(Environment.NewLine, strErrors)
+
+        member self.AsString = self.ToString ()
 
     type Decoder<'a> = JsonElement -> Result<'a, JsonError>
 
