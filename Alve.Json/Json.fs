@@ -27,9 +27,11 @@ module Decode =
         | FieldError of string * JsonError
         | ElementError of int * JsonError
         | MultiError of JsonError list
+        | UserError of string
     with
         override x.ToString() = match x with
                                     | DecodingError e -> e
+                                    | UserError e -> e
                                     | NotFoundError -> "Not found"
                                     | JsonTypeError (exp, got) -> sprintf "Type error: Expected %s, got %s" exp got
                                     | FieldError (field, err) -> sprintf "Error decoding field %s: %O" field err
@@ -117,6 +119,9 @@ module Decode =
         match r with
             | Ok a -> (binder a) json
             | Error e -> Error e
+
+    let bindResult (binder: 'a -> Result<'b, string>) (dec: Decoder<'a>): Decoder<'b> = fun json ->
+        dec json |> Result.bind (fun a -> binder a |> Result.mapError UserError)
 
     let apply (d: Decoder<'a>) (df: Decoder<'a -> 'b>): Decoder<'b> =
         bind (fun f -> bind (fun x -> success (f x)) d) df
