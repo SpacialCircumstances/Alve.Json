@@ -6,7 +6,7 @@ A simple F# library for decoding and encoding JSON values, inspired by Elm's Jso
 
 ## Installation
 
-TODO
+[Via NuGet](https://www.nuget.org/packages/Alve.Json/)
 
 ## Usage
 
@@ -77,7 +77,7 @@ Then we can write datatype decoders in the following way:
 ```fsharp
 open Alve.Json.Decode
 
-let itemDecoder = map2 (fun id label -> { id = id; label = label }) (field "id" jstring) (field "label" jstring > optional)
+let itemDecoder = map2 (fun id label -> { id = id; label = label }) (field "id" jstring) (field "label" jstring |> optional)
 let menuItemDecoder = map1 (fun item -> match item with
                                             | None -> Separator
                                             | Some item -> Item item) (nullable itemDecoder)
