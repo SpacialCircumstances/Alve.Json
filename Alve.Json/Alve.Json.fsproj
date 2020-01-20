@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Authors>SpacialCircumstances</Authors>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Copyright (c) 2019 Felix Nolte</Copyright>
+    <Copyright>Copyright (c) 2019-2020 Felix Nolte</Copyright>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/SpacialCircumstances/Alve.Json</PackageProjectUrl>
     <RepositoryUrl>https://github.com/SpacialCircumstances/Alve.Json</RepositoryUrl>
